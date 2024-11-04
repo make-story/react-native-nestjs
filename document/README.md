@@ -6,7 +6,7 @@ https://www.inflearn.com/course/%EB%A7%9B%EC%A7%91-%EC%A7%80%EB%8F%84%EC%95%B1-%
 
 `study.git/ReactNative/환경구축.md` 내용 참고!
 
-강의에서 사용하는버전은 0.72.6 버전
+강의에서 사용하는버전은 React Native 0.72.6 버전
 
 ## React Native IOS 실행
 
