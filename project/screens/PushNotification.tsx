@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   NativeEventEmitter,
   NativeModules,
@@ -27,9 +27,14 @@ type Props = {
 };
 
 const PushNotificationScreen: React.FC<Props> = ({navigation}) => {
+  const [beaconInfo, setBeaconInfo] = useState<string | null>(null);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
   useEffect(() => {
     // BLE 초기화
-    // 주의! NativeModules.BleManagerModule 대신 NativeModules.BleManager를 사용합니다. (v1.0.0 이후)
     BleManager.start({showAlert: false});
     const bleManagerEmitter = NativeModules.BleManager
       ? new NativeEventEmitter(NativeModules.BleManager)
@@ -78,11 +83,16 @@ const PushNotificationScreen: React.FC<Props> = ({navigation}) => {
     // 비콘 발견 이벤트 핸들러 등록
     const handleDiscoverPeripheral = (peripheral: any) => {
       if (peripheral.name && peripheral.name.includes('Beacon')) {
-        // 비콘 근처에 있을 때 푸시 알림 전송
+        // 비콘 근처에 있을 때 푸시 알림 전송 및 화면에 비콘 정보 출력
         PushNotification.localNotification({
           title: '쿠폰 알림',
           message: '쿠폰이 있습니다.',
         });
+        setBeaconInfo(
+          `Beacon 발견: ${peripheral.name} (${
+            peripheral.id
+          }) - ${JSON.stringify(peripheral)}`,
+        );
       }
     };
     if (bleManagerEmitter) {
@@ -102,6 +112,17 @@ const PushNotificationScreen: React.FC<Props> = ({navigation}) => {
         });
       }
     });
+
+    // 위치 업데이트 설정
+    BackgroundGeolocation.on(
+      'location',
+      (location: {coords: {latitude: any; longitude: any}}) => {
+        setLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      },
+    );
 
     BackgroundGeolocation.ready(
       {
@@ -158,6 +179,12 @@ const PushNotificationScreen: React.FC<Props> = ({navigation}) => {
   return (
     <View>
       <Text>Push Notification Screen</Text>
+      {beaconInfo && <Text>{beaconInfo}</Text>}
+      {location && (
+        <Text>
+          현재 위치: 위도 {location.latitude}, 경도 {location.longitude}
+        </Text>
+      )}
       <Button
         title="웹뷰 화면으로 이동"
         onPress={() =>
