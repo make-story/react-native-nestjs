@@ -1,4 +1,7 @@
 {
   "name": "project",
-  "displayName": "project"
+  "displayName": "project",
+  "ios": {
+    "bundleIdentifier": "org.reactjs.native.healia.project"
+  }
 }
