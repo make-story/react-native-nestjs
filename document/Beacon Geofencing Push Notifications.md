@@ -1,4 +1,5 @@
-React Native 0.72.6을 사용하여 비콘과 가까워질 때 '쿠폰이 있습니다.'라는 푸시 알림을 받는 앱을 만드는 방법을 단계별로 설명드리겠습니다. 이 과정에서는 비콘 SDK를 설정하고, 비콘 및 Geofencing을 활용하여 사용자가 특정 장소에 도달했을 때 푸시 알림을 전송하는 기능을 구현합니다.
+React Native 0.72.6을 사용하여 비콘과 가까워질 때 '쿠폰이 있습니다.'라는 푸시 알림을 받는 앱을 만드는 방법을 단계별로 설명드리겠습니다.  
+이 과정에서는 비콘 SDK를 설정하고, 비콘 및 Geofencing을 활용하여 사용자가 특정 장소에 도달했을 때 푸시 알림을 전송하는 기능을 구현합니다.
 
 ### 1. **환경 설정**
 
@@ -19,6 +20,8 @@ cd BeaconApp
 
 ```bash
 npm install react-native-ble-manager @react-native-community/push-notification-ios react-native-push-notification react-native-background-geolocation
+npm install react-native-background-fetch
+npx pod-install
 ```
 
 ### 2. **iOS 네이티브 설정**
@@ -50,11 +53,19 @@ npm install react-native-ble-manager @react-native-community/push-notification-i
 </array>
 ```
 
+#### 2-3. **Android의 AndroidManifest.xml 수정**
+
+react-native-nestjs.git/project/android/app/src/main/AndroidManifest.xml
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.BLUETOOTH"/>
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+```
+
 ### 3. **비콘 및 Geofencing 감지 및 푸시 알림 코드 구현**
 
 #### 3-1. **BLE 및 푸시 알림 초기화**
-
-`App.js` 파일에서 BLE 모듈과 푸시 알림을 초기화합니다.
 
 ```javascript
 import React, { useEffect } from "react";
@@ -63,17 +74,28 @@ import {
   NativeModules,
   Platform,
   AppState,
+  View,
+  Text,
 } from "react-native";
 import BleManager from "react-native-ble-manager";
-import PushNotification from "react-native-push-notification";
 import PushNotificationIOS from "@react-native-community/push-notification-ios";
 import BackgroundGeolocation from "react-native-background-geolocation";
+import PushNotification from "react-native-push-notification";
 
-const App = () => {
+const PushNotificationScreen: React.FC = () => {
   useEffect(() => {
     // BLE 초기화
+    // 주의! NativeModules.BleManagerModule 대신 NativeModules.BleManager를 사용합니다. (v1.0.0 이후)
     BleManager.start({ showAlert: false });
-    const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
+    const bleManagerEmitter = NativeModules.BleManager
+      ? new NativeEventEmitter(NativeModules.BleManager)
+      : null;
+    if (!NativeModules.BleManager) {
+      console.error(
+        "BleManager is not properly linked. Make sure the native module is linked correctly."
+      );
+      return;
+    }
 
     // 푸시 알림 설정
     PushNotification.configure({
@@ -99,15 +121,18 @@ const App = () => {
     };
 
     // 앱 상태에 따라 스캔 시작
-    const handleAppStateChange = (nextAppState) => {
+    const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === "active" || nextAppState === "background") {
         startScan();
       }
     };
-    AppState.addEventListener("change", handleAppStateChange);
+    const appStateSubscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
 
     // 비콘 발견 이벤트 핸들러 등록
-    const handleDiscoverPeripheral = (peripheral) => {
+    const handleDiscoverPeripheral = (peripheral: any) => {
       if (peripheral.name && peripheral.name.includes("Beacon")) {
         // 비콘 근처에 있을 때 푸시 알림 전송
         PushNotification.localNotification({
@@ -116,13 +141,15 @@ const App = () => {
         });
       }
     };
-    bleManagerEmitter.addListener(
-      "BleManagerDiscoverPeripheral",
-      handleDiscoverPeripheral
-    );
+    if (bleManagerEmitter) {
+      bleManagerEmitter.addListener(
+        "BleManagerDiscoverPeripheral",
+        handleDiscoverPeripheral
+      );
+    }
 
     // Geofencing 설정
-    BackgroundGeolocation.on("geofence", (geofence) => {
+    BackgroundGeolocation.on("geofence", (geofence: { action: string }) => {
       console.log("[geofence] -", geofence);
       if (geofence.action === "ENTER") {
         PushNotification.localNotification({
@@ -176,19 +203,22 @@ const App = () => {
     startScan();
 
     return () => {
-      bleManagerEmitter.removeListener(
-        "BleManagerDiscoverPeripheral",
-        handleDiscoverPeripheral
-      );
-      AppState.removeEventListener("change", handleAppStateChange);
+      if (bleManagerEmitter) {
+        bleManagerEmitter.removeAllListeners("BleManagerDiscoverPeripheral");
+      }
+      appStateSubscription.remove();
       BackgroundGeolocation.removeAllListeners();
     };
   }, []);
 
-  return null;
+  return (
+    <View>
+      <Text>Push Notification Screen</Text>
+    </View>
+  );
 };
 
-export default App;
+export default PushNotificationScreen;
 ```
 
 #### 3-2. **비콘 스캔 및 Geofencing 설정**

@@ -26,11 +26,15 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+
+import {SCREEN_NAMES} from './constant/index';
+
 import SplashScreen from './screens/SplashScreen';
 import WebViewScreen from './screens/WebViewScreen';
 import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
 import {RootStackParamList} from './types';
+import PushNotificationScreen from './screens/PushNotification';
 
 const styles = StyleSheet.create({
   block: {
@@ -129,13 +133,17 @@ function App(): JSX.Element {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Splash"
+        initialRouteName={SCREEN_NAMES.SPLASH}
         screenOptions={{headerShown: false}}>
-        <Stack.Screen name="Splash" component={SplashScreen} />
+        <Stack.Screen name={SCREEN_NAMES.SPLASH} component={SplashScreen} />
         <Stack.Screen
-          name="WebView"
+          name={SCREEN_NAMES.PUSH_NOTIFICATION}
+          component={PushNotificationScreen}
+        />
+        <Stack.Screen
+          name={SCREEN_NAMES.WEB_VIEW}
           component={WebViewScreen}
-          initialParams={{url: 'https://example.com/home'}} // 기본 URL 설정
+          initialParams={{url: 'http://www.makestory.net'}} // 기본 URL 설정
         />
       </Stack.Navigator>
     </NavigationContainer>

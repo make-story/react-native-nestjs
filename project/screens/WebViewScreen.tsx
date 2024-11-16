@@ -3,6 +3,8 @@ import {WebView, WebViewMessageEvent} from 'react-native-webview';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RouteProp} from '@react-navigation/native';
 import {Alert, Button, View} from 'react-native';
+
+import {SCREEN_NAMES} from '../constant/index';
 import {RootStackParamList} from '../types';
 
 type WebViewScreenNavigationProp = StackNavigationProp<
@@ -17,7 +19,7 @@ type Props = {
 };
 
 const WebViewScreen: React.FC<Props> = ({navigation, route}) => {
-  const {url} = route.params; // WebView에서 로드할 URL
+  const {url = 'http://www.makestory.net'} = route.params; // WebView에서 로드할 URL
   const webViewRef = useRef<WebView>(null); // WebView 참조
 
   // 초기 메시지 전달 (injectedJavaScript)
@@ -44,7 +46,7 @@ const WebViewScreen: React.FC<Props> = ({navigation, route}) => {
               // 현재 Stack 닫기
               navigation.pop();
               // 새로운 URL을 가진 WebView 화면 열기
-              navigation.push('WebView', {url: newUrl});
+              navigation.push(SCREEN_NAMES.WEB_VIEW, {url: newUrl});
             },
           },
           {text: '취소', style: 'cancel'},
@@ -88,7 +90,7 @@ const WebViewScreen: React.FC<Props> = ({navigation, route}) => {
             // 현재 스택 닫고
             navigation.pop();
             // 새로운 웹뷰로 이동
-            navigation.push('WebView', {url: message});
+            navigation.push(SCREEN_NAMES.WEB_VIEW, {url: message});
           },
         },
         {text: '취소', style: 'cancel'},

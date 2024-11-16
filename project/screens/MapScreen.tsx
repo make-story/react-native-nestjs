@@ -5,6 +5,8 @@ import {WebView} from 'react-native-webview';
 import Geolocation from '@react-native-community/geolocation';
 import MapView, {Marker, Region} from 'react-native-maps';
 import {StackNavigationProp} from '@react-navigation/stack';
+
+//import {SCREEN_NAMES} from '../constant/index';
 import {RootStackParamList} from '../types';
 
 type MapScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Map'>;

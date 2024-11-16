@@ -3,6 +3,8 @@ import {View, Text, Image, StyleSheet, TouchableOpacity} from 'react-native';
 import Swiper from 'react-native-swiper';
 import {WebView} from 'react-native-webview';
 import {StackNavigationProp} from '@react-navigation/stack';
+
+//import {SCREEN_NAMES} from '../constant/index';
 import {RootStackParamList} from '../types';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
