@@ -6,13 +6,27 @@ import {
   AppState,
   View,
   Text,
+  Button,
 } from 'react-native';
 import BleManager from 'react-native-ble-manager';
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import BackgroundGeolocation from 'react-native-background-geolocation';
 import PushNotification from 'react-native-push-notification';
+import {StackNavigationProp} from '@react-navigation/stack';
 
-const PushNotificationScreen: React.FC = () => {
+import {SCREEN_NAMES} from '../constant/index';
+import {RootStackParamList} from '../types';
+
+type PushNotificationNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'PushNotification'
+>;
+
+type Props = {
+  navigation: PushNotificationNavigationProp;
+};
+
+const PushNotificationScreen: React.FC<Props> = ({navigation}) => {
   useEffect(() => {
     // BLE 초기화
     // 주의! NativeModules.BleManagerModule 대신 NativeModules.BleManager를 사용합니다. (v1.0.0 이후)
@@ -144,6 +158,14 @@ const PushNotificationScreen: React.FC = () => {
   return (
     <View>
       <Text>Push Notification Screen</Text>
+      <Button
+        title="웹뷰 화면으로 이동"
+        onPress={() =>
+          navigation.navigate(SCREEN_NAMES.WEB_VIEW, {
+            url: 'http://www.makestory.net',
+          })
+        }
+      />
     </View>
   );
 };
