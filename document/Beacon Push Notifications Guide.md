@@ -1,5 +1,4 @@
-React Native 0.72.6을 사용하여 비콘과 가까워질 때 '쿠폰이 있습니다.'라는 푸시 알림을 받는 앱을 만드는 방법을 단계별로 설명드리겠습니다.  
-이 과정에서는 비콘 SDK를 설정하고, 비콘 및 Geofencing을 활용하여 사용자가 특정 장소에 도달했을 때 푸시 알림을 전송하는 기능을 구현합니다.
+React Native 0.72.6을 사용하여 비콘과 가까워질 때 '해당 매장에서 사용 가능한 쿠폰이 있습니다.'라는 푸시 알림을 받는 앱을 만드는 방법을 단계별로 설명드리겠습니다. 이 과정에서는 비콘 SDK를 설정하고, 비콘 및 Geofencing을 활용하여 사용자가 특정 장소에 도달했을 때 푸시 알림을 전송하는 기능을 구현합니다.
 
 ### 1. **환경 설정**
 
@@ -20,8 +19,6 @@ cd BeaconApp
 
 ```bash
 npm install react-native-ble-manager @react-native-community/push-notification-ios react-native-push-notification react-native-background-geolocation
-npm install react-native-background-fetch
-npx pod-install
 ```
 
 ### 2. **iOS 네이티브 설정**
@@ -53,22 +50,14 @@ npx pod-install
 </array>
 ```
 
-#### 2-3. **Android의 AndroidManifest.xml 수정**
-
-react-native-nestjs.git/project/android/app/src/main/AndroidManifest.xml
-
-```xml
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-<uses-permission android:name="android.permission.BLUETOOTH"/>
-<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
-```
-
 ### 3. **비콘 및 Geofencing 감지 및 푸시 알림 코드 구현**
 
 #### 3-1. **BLE 및 푸시 알림 초기화**
 
-```javascript
-import React, { useEffect } from "react";
+`App.tsx` 파일에서 BLE 모듈과 푸시 알림을 초기화합니다.
+
+```tsx
+import React, { useEffect, useState } from "react";
 import {
   NativeEventEmitter,
   NativeModules,
@@ -76,20 +65,38 @@ import {
   AppState,
   View,
   Text,
+  Button,
 } from "react-native";
 import BleManager from "react-native-ble-manager";
 import PushNotificationIOS from "@react-native-community/push-notification-ios";
 import BackgroundGeolocation from "react-native-background-geolocation";
 import PushNotification from "react-native-push-notification";
+import { StackNavigationProp } from "@react-navigation/stack";
 
-const PushNotificationScreen: React.FC = () => {
+import { SCREEN_NAMES } from "../constant/index";
+import { RootStackParamList } from "../types";
+
+type PushNotificationNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "PushNotification"
+>;
+
+type Props = {
+  navigation: PushNotificationNavigationProp;
+};
+
+const PushNotificationScreen: React.FC<Props> = ({ navigation }) => {
+  const [beaconInfo, setBeaconInfo] = useState<string | null>(null);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
   useEffect(() => {
     // BLE 초기화
-    // 주의! NativeModules.BleManagerModule 대신 NativeModules.BleManager를 사용합니다. (v1.0.0 이후)
     BleManager.start({ showAlert: false });
-    const bleManagerEmitter = NativeModules.BleManager
-      ? new NativeEventEmitter(NativeModules.BleManager)
-      : null;
+    const bleManagerEmitter = new NativeEventEmitter(NativeModules.BleManager);
+
     if (!NativeModules.BleManager) {
       console.error(
         "BleManager is not properly linked. Make sure the native module is linked correctly."
@@ -134,19 +141,22 @@ const PushNotificationScreen: React.FC = () => {
     // 비콘 발견 이벤트 핸들러 등록
     const handleDiscoverPeripheral = (peripheral: any) => {
       if (peripheral.name && peripheral.name.includes("Beacon")) {
-        // 비콘 근처에 있을 때 푸시 알림 전송
+        // 비콘 근처에 있을 때 푸시 알림 전송 및 화면에 비콘 정보 출력
         PushNotification.localNotification({
           title: "쿠폰 알림",
-          message: "쿠폰이 있습니다.",
+          message: "해당 매장에서 사용 가능한 쿠폰이 있습니다.",
         });
+        setBeaconInfo(
+          `Beacon 발견: ${peripheral.name} (${
+            peripheral.id
+          }) - ${JSON.stringify(peripheral)}`
+        );
       }
     };
-    if (bleManagerEmitter) {
-      bleManagerEmitter.addListener(
-        "BleManagerDiscoverPeripheral",
-        handleDiscoverPeripheral
-      );
-    }
+    bleManagerEmitter.addListener(
+      "BleManagerDiscoverPeripheral",
+      handleDiscoverPeripheral
+    );
 
     // Geofencing 설정
     BackgroundGeolocation.on("geofence", (geofence: { action: string }) => {
@@ -154,10 +164,23 @@ const PushNotificationScreen: React.FC = () => {
       if (geofence.action === "ENTER") {
         PushNotification.localNotification({
           title: "매장 방문 알림",
-          message: "특정 매장을 방문하셨습니다. 쿠폰이 있습니다!",
+          message: "해당 매장에서 사용 가능한 쿠폰이 있습니다.",
         });
       }
     });
+
+    // 위치 업데이트 설정
+    BackgroundGeolocation.on(
+      "location",
+      (location: { coords: { latitude: any; longitude: any } }) => {
+        if (location?.coords?.latitude && location?.coords?.longitude) {
+          setLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        }
+      }
+    );
 
     BackgroundGeolocation.ready(
       {
@@ -189,7 +212,7 @@ const PushNotificationScreen: React.FC = () => {
         storeLocations.forEach((store) => {
           BackgroundGeolocation.addGeofence({
             identifier: store.identifier,
-            radius: 200, // 반경 200미터
+            radius: 100, // 반경 100미터
             latitude: store.latitude,
             longitude: store.longitude,
             notifyOnEntry: true,
@@ -203,9 +226,7 @@ const PushNotificationScreen: React.FC = () => {
     startScan();
 
     return () => {
-      if (bleManagerEmitter) {
-        bleManagerEmitter.removeAllListeners("BleManagerDiscoverPeripheral");
-      }
+      bleManagerEmitter.removeAllListeners("BleManagerDiscoverPeripheral");
       appStateSubscription.remove();
       BackgroundGeolocation.removeAllListeners();
     };
@@ -214,6 +235,20 @@ const PushNotificationScreen: React.FC = () => {
   return (
     <View>
       <Text>Push Notification Screen</Text>
+      {beaconInfo && <Text>{beaconInfo}</Text>}
+      {location && (
+        <Text>
+          현재 위치: 위도 {location.latitude}, 경도 {location.longitude}
+        </Text>
+      )}
+      <Button
+        title="웹뷰 화면으로 이동"
+        onPress={() =>
+          navigation.navigate(SCREEN_NAMES.WEB_VIEW, {
+            url: "http://www.makestory.net",
+          })
+        }
+      />
     </View>
   );
 };
@@ -221,35 +256,4 @@ const PushNotificationScreen: React.FC = () => {
 export default PushNotificationScreen;
 ```
 
-#### 3-2. **비콘 스캔 및 Geofencing 설정**
-
-- `BleManager.scan([], 5, true)`은 5초 동안 BLE 장치들을 스캔합니다.
-- `handleDiscoverPeripheral` 함수는 주변에 비콘이 발견되었을 때 호출되며, `peripheral.name`을 통해 비콘을 확인하고, 근처에 비콘이 있을 때 푸시 알림을 전송합니다.
-- `BackgroundGeolocation`을 사용하여 사용자가 특정 매장 위치에 도달하면 푸시 알림을 보냅니다.
-- `AppState`를 사용하여 앱이 백그라운드에 있을 때에도 스캔을 유지할 수 있도록 설정합니다.
-
-### 4. **테스트 및 디버깅**
-
-#### 4-1. **물리 디바이스에서 테스트**
-
-- 비콘 기능과 위치 기반 알림은 시뮬레이터에서 테스트할 수 없기 때문에 **실제 iPhone**을 사용해야 합니다.
-- iPhone을 Mac에 연결하고, Xcode에서 물리 디바이스를 선택하여 빌드 및 실행합니다.
-
-#### 4-2. **비콘 및 위치 준비**
-
-- 실제 비콘 장치를 준비하여 Bluetooth 범위 내에 위치시킵니다.
-- 매장의 위도와 경도 정보를 사용하여 Geofencing을 설정합니다.
-
-### 5. **추가 고려사항**
-
-- **백그라운드 상태 유지**: 앱이 백그라운드에서도 비콘 및 Geofencing을 감지해야 하므로, iOS의 **백그라운드 모드** 설정을 잘 구성해야 합니다. `AppState`를 사용하여 백그라운드 상태에서도 스캔을 유지하도록 설정합니다.
-- **배터리 최적화**: Bluetooth 스캔과 위치 추적은 배터리 소모가 크므로 필요할 때만 스캔을 시작하고 종료하는 로직을 추가하는 것이 좋습니다.
-
-### 요약
-
-1. **React Native 프로젝트 초기화 및 필수 패키지 설치**.
-2. **iOS 네이티브 설정**을 통해 권한 요청 및 백그라운드 모드 설정.
-3. **BLE 모듈 및 Geofencing 설정**을 통해 비콘과 특정 매장 방문 시 푸시 알림 전송.
-4. **물리 디바이스**에서 테스트하며 비콘 및 Geofencing 동작 확인.
-
-이 과정을 통해 비콘과 가까워지거나 특정 매장을 방문했을 때 '쿠폰이 있습니다.'라는 푸시 알림을 받는 React Native 앱을 구현할 수 있습니다. 필요한 부분에 따라 코드를 확장하거나 커스터마이징할 수 있습니다.
+위 코드에서는 **비콘 근처**에 있을 때와 **특정 위치 범위 안**에 들어
