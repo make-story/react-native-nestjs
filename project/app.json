@@ -2,6 +2,6 @@
   "name": "project",
   "displayName": "project",
   "ios": {
-    "bundleIdentifier": "org.reactjs.native.healia.project"
+    "bundleIdentifier": "org.reactjs.native.oplat.project"
   }
 }
