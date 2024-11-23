@@ -104,8 +104,10 @@ const WebViewScreen: React.FC<Props> = ({navigation, route}) => {
       <WebView
         ref={webViewRef}
         source={{uri: url}}
+        originWhitelist={['*']}
         style={{flex: 1}}
         javaScriptEnabled={true}
+        allowsInlineMediaPlayback={true}
         injectedJavaScript={initialJavaScript} // 웹페이지 로드 시 실행할 JavaScript 코드
         onShouldStartLoadWithRequest={handleNavigationChange} // URL 이동 감지
         onMessage={handleMessage} // 메시지 수신 처리

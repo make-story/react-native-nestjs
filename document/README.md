@@ -6,7 +6,7 @@ https://www.inflearn.com/course/%EB%A7%9B%EC%A7%91-%EC%A7%80%EB%8F%84%EC%95%B1-%
 
 `study.git/ReactNative/환경구축.md` 내용 참고!
 
-강의에서 사용하는버전은 React Native 0.72.6 버전
+강의에서 사용하는버전은 `React Native 0.72.6 버전`
 
 ## 백엔드 소스코드 (3-7 백엔드 서버 실행하기 강의에 사용됩니다)
 
@@ -15,6 +15,8 @@ https://www.inflearn.com/course/%EB%A7%9B%EC%A7%91-%EC%A7%80%EB%8F%84%EC%95%B1-%
   https://github.com/InKyoJeong/Matzip/tree/lecture/섹션-수업코드
 
 # 유용한 추가 패키지 설치
+
+`주의! 패키지는 항상 리액트 네이티브 버전에 맞는 버전으로 설치해야 한다.`
 
 ```bash
 # React Native WebView 설치

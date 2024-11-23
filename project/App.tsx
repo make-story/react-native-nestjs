@@ -35,6 +35,8 @@ import HomeScreen from './screens/HomeScreen';
 import MapScreen from './screens/MapScreen';
 import {RootStackParamList} from './types';
 import PushNotificationScreen from './screens/PushNotification';
+import BleManagerScreen from './screens/BleManagerScreen';
+import BlePlxScreen from './screens/BlePlxScreen';
 
 const styles = StyleSheet.create({
   block: {
@@ -133,12 +135,21 @@ function App(): JSX.Element {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={SCREEN_NAMES.SPLASH}
+        //initialRouteName={SCREEN_NAMES.SPLASH}
+        initialRouteName={SCREEN_NAMES.PUSH_NOTIFICATION}
         screenOptions={{headerShown: false}}>
         <Stack.Screen name={SCREEN_NAMES.SPLASH} component={SplashScreen} />
         <Stack.Screen
           name={SCREEN_NAMES.PUSH_NOTIFICATION}
           component={PushNotificationScreen}
+        />
+        <Stack.Screen
+          name={SCREEN_NAMES.BLE_MANAGER_SCREEN}
+          component={BleManagerScreen}
+        />
+        <Stack.Screen
+          name={SCREEN_NAMES.BLE_PLX_SCREEN}
+          component={BlePlxScreen}
         />
         <Stack.Screen
           name={SCREEN_NAMES.WEB_VIEW}

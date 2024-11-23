@@ -21,6 +21,16 @@ cd BeaconApp
 npm install react-native-ble-manager @react-native-community/push-notification-ios react-native-push-notification react-native-background-geolocation
 ```
 
+react-native-ble-manager는 기본적으로 BLE 장치의 스캔을 지원하며, 비콘도 BLE 장치이기 때문에 발견할 수 있습니다.  
+하지만, 이 라이브러리는 비콘에 특화된 기능을 제공하지 않습니다.  
+예를 들어, 비콘의 UUID, Major, Minor 값을 쉽게 파싱하거나, 비콘 영역 진입 및 이탈 이벤트를 제공하지 않습니다.
+
+비콘 탐지 시 react-native-ble-manager의 한계
+
+- 비콘은 일반적인 BLE 장치로 광고를 보내기 때문에 react-native-ble-manager로 스캔할 수는 있지만, 비콘 데이터 파싱은 직접 처리해야 합니다.
+- 비콘 신호의 UUID, Major, Minor 등 주요 데이터를 직접 파싱해야 하며, 이는 광고 데이터에서 추출하는 작업이 필요합니다.
+- 또한, 비콘의 영역에 들어오거나 나가는 것을 감지하는 기능은 직접 구현해야 하며, react-native-ble-manager는 이를 기본적으로 제공하지 않습니다.
+
 ### 2. **iOS 네이티브 설정**
 
 #### 2-1. **Xcode 설정**
